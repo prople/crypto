@@ -16,3 +16,7 @@ pub mod base {
 
     pub use keysecure::base::ToKeySecure;
 }
+
+pub mod external {
+    pub use rst_common::with_cryptography as crypto;
+}
