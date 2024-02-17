@@ -1,10 +1,5 @@
 # prople/agent/crypto
 
-The crypto library used by 
-
-- `prople/agent/account`
-- `prople/agent/did`
-
 This library provides multiple core algorithms :
 
 - `ECDSA / X25519` used for digital signature and key agreement
@@ -44,4 +39,6 @@ All of these generated keys will be put and encrypted into `KeySecure` format fo
 }
 ```
 
+> **INFO**
+>
 > The `ECDSA` algorithm described on this library will not be used on `P2P` connection, since the `prople/agent` using `rust-libp2p` that already have its own key agreement mechanism for its `Noice Protocol` 
