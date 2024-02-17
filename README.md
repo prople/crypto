@@ -1,4 +1,4 @@
-# prople/agent/crypto
+# prople/crypto
 
 This library provides multiple core algorithms :
 
@@ -38,7 +38,3 @@ All of these generated keys will be put and encrypted into `KeySecure` format fo
   }
 }
 ```
-
-> **INFO**
->
-> The `ECDSA` algorithm described on this library will not be used on `P2P` connection, since the `prople/agent` using `rust-libp2p` that already have its own key agreement mechanism for its `Noice Protocol` 
