@@ -1,13 +1,16 @@
-use rst_common::with_cryptography::argon2::{password_hash::SaltString, Algorithm, Argon2, Params, Version};
+use rst_common::standard::serde::{self, Deserialize, Serialize};
+use rst_common::with_cryptography::argon2::{
+    password_hash::SaltString, Algorithm, Argon2, Params, Version,
+};
 use rst_common::with_cryptography::rand::{rngs::adapter::ReseedingRng, SeedableRng};
 use rst_common::with_cryptography::rand_chacha::{rand_core::OsRng as RandCoreOsRng, ChaCha20Core};
-use serde::{Deserialize, Serialize};
 
 pub type KeyBytesRange = [u8; 32];
 
 use crate::errors::PassphraseError;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(crate = "self::serde")]
 pub struct KdfParams {
     pub m_cost: u32,
     pub t_cost: u32,
@@ -43,11 +46,7 @@ impl Salt {
     }
 
     pub fn from_vec(v: Vec<u8>) -> Result<String, PassphraseError> {
-        let try_salt_string = String::from_utf8(v);
-        match try_salt_string {
-            Ok(value) => Ok(value),
-            Err(err) => Err(PassphraseError::ParseSaltError(err.to_string())),
-        }
+        String::from_utf8(v).map_err(|err| PassphraseError::ParseSaltError(err.to_string()))
     }
 }
 
@@ -61,29 +60,25 @@ impl Passphrase {
     }
 
     pub fn hash(&self, password: String, salt: Vec<u8>) -> Result<KeyBytesRange, PassphraseError> {
-        let try_argon_params = Params::new(
+        let argon_params = Params::new(
             self.params.m_cost,
             self.params.t_cost,
             self.params.p_cost,
             Some(self.params.output_len),
-        );
-
-        let argon_params = match try_argon_params {
-            Ok(value) => value,
-            Err(err) => return Err(PassphraseError::BuildParamsError(err.to_string())),
-        };
+        )
+        .map_err(|err| PassphraseError::BuildParamsError(err.to_string()))?;
 
         let mut output_key_material = [0u8; 32];
         let argon = Argon2::new(Algorithm::default(), Version::default(), argon_params);
-        let hashed = argon.hash_password_into(
-            password.as_bytes(),
-            salt.as_slice(),
-            &mut output_key_material,
-        );
-        match hashed {
-            Ok(_) => Ok(output_key_material),
-            Err(err) => Err(PassphraseError::HashPasswordError(err.to_string())),
-        }
+
+        argon
+            .hash_password_into(
+                password.as_bytes(),
+                salt.as_slice(),
+                &mut output_key_material,
+            )
+            .map(|_| output_key_material)
+            .map_err(|err| PassphraseError::HashPasswordError(err.to_string()))
     }
 }
 

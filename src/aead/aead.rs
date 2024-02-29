@@ -31,20 +31,16 @@ impl AEAD {
 
     pub fn encrypt(key: &Key, message: &Vec<u8>) -> Result<Vec<u8>, AeadError> {
         let cipher = XChaCha20Poly1305::new(&key.key.into());
-        let encrypted = cipher.encrypt(&key.nonce.into(), message.as_slice());
-        match encrypted {
-            Ok(value) => Ok(value),
-            Err(err) => Err(AeadError::CipherGeneratorError(err.to_string())),
-        }
+        cipher
+            .encrypt(&key.nonce.into(), message.as_slice())
+            .map_err(|err| AeadError::CipherGeneratorError(err.to_string()))
     }
 
     pub fn decrypt(key: &Key, encrypted: &Vec<u8>) -> Result<Vec<u8>, AeadError> {
         let cipher = XChaCha20Poly1305::new(&key.key.into());
-        let decrypted = cipher.decrypt(&key.nonce.into(), encrypted.as_ref());
-        match decrypted {
-            Ok(value) => Ok(value),
-            Err(err) => Err(AeadError::CipherGeneratorError(err.to_string())),
-        }
+        cipher
+            .decrypt(&key.nonce.into(), encrypted.as_ref())
+            .map_err(|err| AeadError::CipherGeneratorError(err.to_string()))
     }
 }
 

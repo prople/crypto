@@ -1,4 +1,4 @@
-use thiserror::Error;
+use rst_common::with_errors::thiserror::{self, Error};
 
 #[derive(Debug, Error, PartialEq)]
 pub enum CommonError {

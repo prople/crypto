@@ -1,9 +1,11 @@
 use core::fmt;
 
-use rst_common::with_cryptography::{hex, blake3};
-use rst_common::with_cryptography::x25519_dalek::{PublicKey as ECDHPublicKey, SharedSecret, StaticSecret};
 use rst_common::with_cryptography::rand::{rngs::adapter::ReseedingRng, SeedableRng};
 use rst_common::with_cryptography::rand_chacha::{rand_core::OsRng, ChaCha20Core};
+use rst_common::with_cryptography::x25519_dalek::{
+    PublicKey as ECDHPublicKey, SharedSecret, StaticSecret,
+};
+use rst_common::with_cryptography::{blake3, hex};
 
 use crate::base::ToKeySecure;
 use crate::KeySecure::CONTEXT_X25519;
@@ -35,15 +37,8 @@ impl PublicKey {
     }
 
     pub fn from_hex(key: &String) -> Result<Self, EcdhError> {
-        let pubkey = hex::decode(key);
-        let result = match pubkey {
-            Ok(value) => value,
-            Err(err) => {
-                return Err(EcdhError::Common(CommonError::ParseHexError(
-                    err.to_string(),
-                )))
-            }
-        };
+        let result = hex::decode(key)
+            .map_err(|err| EcdhError::Common(CommonError::ParseHexError(err.to_string())))?;
 
         let peer_pub_bytes: [u8; 32] = match result.try_into() {
             Ok(value) => value,
@@ -71,48 +66,33 @@ impl Secret {
     }
 
     pub fn to_blake3(self) -> Result<String, EcdhError> {
-        let hexed = match self.to_hex() {
-            Ok(value) => value,
-            Err(_) => {
-                return Err(EcdhError::Common(CommonError::ParseHexError(
-                    "unable to parse hex".to_string(),
-                )))
-            }
-        };
+        let hexed = self.to_hex().map_err(|_| {
+            EcdhError::Common(CommonError::ParseHexError(
+                "unable to parse hex".to_string(),
+            ))
+        })?;
 
-        let decoded = hex::decode(hexed);
-        let result = match decoded {
-            Ok(value) => value,
-            Err(_) => {
-                return Err(EcdhError::Common(CommonError::ParseHexError(
-                    "unable to decode given hex".to_string(),
-                )))
-            }
-        };
+        let result = hex::decode(hexed).map_err(|_| {
+            EcdhError::Common(CommonError::ParseHexError(
+                "unable to decode given hex".to_string(),
+            ))
+        })?;
 
         let hashed = blake3::hash(result.as_slice());
         Ok(hex::encode(hashed.as_bytes()))
     }
 
     pub fn to_hex(self) -> Result<String, EcdhError> {
-        let result = match self.shared() {
-            Ok(value) => value,
-            Err(_) => {
-                return Err(EcdhError::ParseSharedError(
-                    "unable to parse shared secret".to_string(),
-                ))
-            }
-        };
+        let result = self.shared().map_err(|_| {
+            EcdhError::ParseSharedError("unable to parse shared secret".to_string())
+        })?;
 
         Ok(hex::encode(result.to_bytes()))
     }
 
     pub fn shared(self) -> Result<SharedSecret, EcdhError> {
-        let pubkey = PublicKey::from_hex(&self.peer);
-        let peer_pub = match pubkey {
-            Ok(value) => value,
-            Err(err) => return Err(EcdhError::ParsePublicKeyError(err.to_string())),
-        };
+        let peer_pub = PublicKey::from_hex(&self.peer)
+            .map_err(|err| EcdhError::ParsePublicKeyError(err.to_string()))?;
 
         let peer_pub_key = ECDHPublicKey::from(peer_pub.to_bytes());
         let shared_secret = self.secret.diffie_hellman(&peer_pub_key);
@@ -161,25 +141,15 @@ impl KeyPair {
     }
 
     pub fn from_hex(val: String) -> Result<Self, EcdhError> {
-        let decode = hex::decode(val);
-        let decoded = match decode {
-            Ok(value) => value,
-            Err(err) => {
-                return Err(EcdhError::Common(CommonError::ParseHexError(
-                    err.to_string(),
-                )))
-            }
-        };
+        let decoded = hex::decode(val)
+            .map_err(|err| EcdhError::Common(CommonError::ParseHexError(err.to_string())))?;
 
         let valid_bytes: Result<[u8; 32], _> = decoded.try_into();
-        match valid_bytes {
-            Ok(value) => Ok(Self {
-                secret: StaticSecret::from(value),
-            }),
-            Err(_) => Err(EcdhError::ParseBytesError(
-                "unable to parse decoded bytes".to_string(),
-            )),
-        }
+        valid_bytes
+            .map(|val| Self {
+                secret: StaticSecret::from(val),
+            })
+            .map_err(|_| EcdhError::ParseBytesError("unable to parse decode bytes".to_string()))
     }
 
     pub fn to_bytes(&self) -> ECDHPrivateKeyBytes {
@@ -200,39 +170,23 @@ impl ToKeySecure for KeyPair {
         let passphrase_salt = Salt::generate();
         let passphrase_kdf_params = KdfParams::default();
         let passphrase = Passphrase::new(passphrase_kdf_params.clone());
-        let try_hash_password = passphrase.hash(password, passphrase_salt.clone());
-        let password_hashed = match try_hash_password {
-            Ok(value) => value,
-            Err(err) => return Err(KeySecureError::BuildKeySecureError(err.to_string())),
-        };
+
+        let password_hashed = passphrase
+            .hash(password, passphrase_salt.clone())
+            .map_err(|err| KeySecureError::BuildKeySecureError(err.to_string()))?;
 
         let aead_nonce = AEAD::nonce();
         let try_aead_nonce: Result<[u8; 24], _> = aead_nonce.try_into();
-        let aead_nonce_value = match try_aead_nonce {
-            Ok(value) => value,
-            Err(_) => {
-                return Err(KeySecureError::BuildKeySecureError(
-                    "unable to generate nonce".to_string(),
-                ))
-            }
-        };
+        let aead_nonce_value = try_aead_nonce.map_err(|_| {
+            KeySecureError::BuildKeySecureError("unable to generate error".to_string())
+        })?;
 
         let aead_key = Key::generate(password_hashed, aead_nonce_value);
-        let try_ciphertext_pem = AEAD::encrypt(&aead_key, &priv_key_hex.as_bytes().to_vec());
-        let ciphertext = match try_ciphertext_pem {
-            Ok(value) => value,
-            Err(_) => {
-                return Err(KeySecureError::BuildKeySecureError(
-                    "unable to encrypt private key".to_string(),
-                ))
-            }
-        };
+        let ciphertext = AEAD::encrypt(&aead_key, &priv_key_hex.as_bytes().to_vec())
+            .map_err(|err| KeySecureError::BuildKeySecureError(err.to_string()))?;
 
-        let try_salt_value = Salt::from_vec(passphrase_salt.clone());
-        let passphrase_salt_value = match try_salt_value {
-            Ok(value) => value,
-            Err(err) => return Err(KeySecureError::BuildKeySecureError(err.to_string())),
-        };
+        let passphrase_salt_value = Salt::from_vec(passphrase_salt.clone())
+            .map_err(|err| KeySecureError::BuildKeySecureError(err.to_string()))?;
 
         let keysecure_kdf_params =
             KeySecureKdfParams::new(passphrase_kdf_params.clone(), passphrase_salt_value);

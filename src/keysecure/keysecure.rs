@@ -1,6 +1,7 @@
 use crate::Passphrase::KdfParams as PassphraseKDFParams;
 
-use rst_common::standard::serde::{Deserialize, Serialize};
+use rst_common::standard::serde::{self, Deserialize, Serialize};
+use rst_common::standard::serde_json;
 use rst_common::standard::uuid::Uuid;
 
 pub const CONTEXT_X25519: &str = "X25519";
@@ -11,11 +12,13 @@ pub const CRYPTO_CIPHER_ALGO: &str = "xchacha20poly1305";
 use crate::errors::CommonError;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(crate = "self::serde")]
 pub struct KeySecureCryptoParams {
     pub nonce: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(crate = "self::serde")]
 pub struct KeySecureCrypto {
     pub cipher: String,
 
@@ -45,6 +48,7 @@ impl KeySecureCrypto {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(crate = "self::serde")]
 pub struct KdfParams {
     params: PassphraseKDFParams,
     salt: String,
@@ -57,6 +61,7 @@ impl KdfParams {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(crate = "self::serde")]
 pub struct KeySecure {
     pub id: Uuid,
     pub context: String,
@@ -74,11 +79,7 @@ impl KeySecure {
     }
 
     pub fn to_json(&self) -> Result<String, CommonError> {
-        let try_json = serde_json::to_string(self);
-        match try_json {
-            Ok(value) => Ok(value),
-            Err(err) => Err(CommonError::BuildJSONError(err.to_string())),
-        }
+        serde_json::to_string(self).map_err(|err| CommonError::BuildJSONError(err.to_string()))
     }
 }
 

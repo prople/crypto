@@ -1,9 +1,12 @@
+#![doc = include_str!("../README.md")]
+
 mod aead;
 mod ecdh;
 mod eddsa;
-pub mod errors;
 mod keysecure;
 mod passphrase;
+
+pub mod errors;
 
 pub use aead::aead as AEAD;
 pub use ecdh::ecdh as ECDH;

@@ -1,9 +1,8 @@
-use rst_common::with_cryptography::hex;
 use rst_common::with_cryptography::ed25519_dalek::{
-    self,
-    pkcs8::DecodePrivateKey, pkcs8::EncodePrivateKey, Signature as EdDSASignature, Signer,
+    self, pkcs8::DecodePrivateKey, pkcs8::EncodePrivateKey, Signature as EdDSASignature, Signer,
     SigningKey, Verifier, VerifyingKey, PUBLIC_KEY_LENGTH, SECRET_KEY_LENGTH, SIGNATURE_LENGTH,
 };
+use rst_common::with_cryptography::hex;
 
 use rst_common::with_cryptography::rand::{rngs::adapter::ReseedingRng, SeedableRng};
 use rst_common::with_cryptography::rand_chacha::{rand_core::OsRng, ChaCha20Core};
@@ -40,60 +39,32 @@ impl PubKey {
     }
 
     pub fn from_hex(val: String) -> Result<Self, EddsaError> {
-        let decode = hex::decode(val);
-        let decoded = match decode {
-            Ok(value) => value,
-            Err(err) => {
-                return Err(EddsaError::Common(CommonError::ParseHexError(
-                    err.to_string(),
-                )))
-            }
-        };
+        let decoded = hex::decode(val)
+            .map_err(|err| EddsaError::Common(CommonError::ParseHexError(err.to_string())))?;
 
         let try_to_pub_bytes: Result<EdDSAPubKeyBytes, _> = decoded.try_into();
-        let pub_bytes = match try_to_pub_bytes {
-            Ok(value) => value,
-            Err(_) => {
-                return Err(EddsaError::InvalidPubKeyError(
-                    "error invalid public key".to_string(),
-                ))
-            }
-        };
+        let pub_bytes = try_to_pub_bytes
+            .map_err(|_| EddsaError::InvalidPubKeyError("error invalid public key".to_string()))?;
 
-        let pub_key = VerifyingKey::from_bytes(&pub_bytes);
-        match pub_key {
-            Ok(value) => Ok(Self { key: value }),
-            Err(err) => Err(EddsaError::InvalidPubKeyError(err.to_string())),
-        }
+        VerifyingKey::from_bytes(&pub_bytes)
+            .map(|val| Self { key: val })
+            .map_err(|err| EddsaError::InvalidPubKeyError(err.to_string()))
     }
 
     pub fn verify(&self, message: &[u8], signature_hex: String) -> Result<bool, EddsaError> {
-        let signature_decode = hex::decode(signature_hex);
-        let signature_decoded = match signature_decode {
-            Ok(value) => value,
-            Err(err) => {
-                return Err(EddsaError::Common(CommonError::ParseHexError(
-                    err.to_string(),
-                )))
-            }
-        };
+        let signature_decoded = hex::decode(signature_hex)
+            .map_err(|err| EddsaError::Common(CommonError::ParseHexError(err.to_string())))?;
 
         let signature_decode_bytes: Result<EdDSASignatureBytes, _> = signature_decoded.try_into();
-        let signature_decoded_bytes = match signature_decode_bytes {
-            Ok(value) => value,
-            Err(_) => {
-                return Err(EddsaError::InvalidSignatureError(
-                    "error invalid signature".to_string(),
-                ))
-            }
-        };
+        let signature_decoded_bytes = signature_decode_bytes.map_err(|_| {
+            EddsaError::InvalidSignatureError("error invalid signature".to_string())
+        })?;
 
         let signature = EdDSASignature::from_bytes(&signature_decoded_bytes);
-        let result = self.key.verify(message, &signature);
-        match result {
-            Ok(_) => Ok(true),
-            Err(err) => Err(EddsaError::InvalidSignatureError(err.to_string())),
-        }
+        self.key
+            .verify(message, &signature)
+            .map(|_| true)
+            .map_err(|err| EddsaError::InvalidSignatureError(err.to_string()))
     }
 }
 
@@ -112,60 +83,40 @@ impl PrivKey {
     }
 
     pub fn to_pem(&self) -> Result<String, EddsaError> {
-        let pem = self
-            .key
-            .to_pkcs8_pem(ed25519_dalek::pkcs8::spki::der::pem::LineEnding::default());
-        match pem {
-            Ok(value) => Ok(value.to_string()),
-            Err(err) => Err(EddsaError::EncodePemError(err.to_string())),
-        }
+        self.key
+            .to_pkcs8_pem(ed25519_dalek::pkcs8::spki::der::pem::LineEnding::default())
+            .map(|val| val.to_string())
+            .map_err(|err| EddsaError::EncodePemError(err.to_string()))
     }
 }
 
 impl ToKeySecure for PrivKey {
     fn to_keysecure(&self, password: String) -> Result<KeySecure, KeySecureError> {
-        let try_pem = self.to_pem();
-        let pem = match try_pem {
-            Ok(value) => value,
-            Err(err) => return Err(KeySecureError::BuildKeySecureError(err.to_string())),
-        };
+        let pem = self
+            .to_pem()
+            .map_err(|err| KeySecureError::BuildKeySecureError(err.to_string()))?;
 
         let passphrase_salt = Salt::generate();
         let passphrase_kdf_params = KdfParams::default();
         let passphrase = Passphrase::new(passphrase_kdf_params.clone());
-        let try_hash_password = passphrase.hash(password, passphrase_salt.clone());
-        let password_hashed = match try_hash_password {
-            Ok(value) => value,
-            Err(err) => return Err(KeySecureError::BuildKeySecureError(err.to_string())),
-        };
+
+        let password_hashed = passphrase
+            .hash(password, passphrase_salt.clone())
+            .map_err(|err| KeySecureError::BuildKeySecureError(err.to_string()))?;
 
         let aead_nonce = AEAD::nonce();
         let try_aead_nonce: Result<[u8; 24], _> = aead_nonce.try_into();
-        let aead_nonce_value = match try_aead_nonce {
-            Ok(value) => value,
-            Err(_) => {
-                return Err(KeySecureError::BuildKeySecureError(
-                    "unable to generate nonce".to_string(),
-                ))
-            }
-        };
+        let aead_nonce_value = try_aead_nonce.map_err(|_| {
+            KeySecureError::BuildKeySecureError("unable to generate nonce".to_string())
+        })?;
 
         let aead_key = Key::generate(password_hashed, aead_nonce_value);
-        let try_ciphertext_pem = AEAD::encrypt(&aead_key, &pem.as_bytes().to_vec());
-        let ciphertext_pem = match try_ciphertext_pem {
-            Ok(value) => value,
-            Err(_) => {
-                return Err(KeySecureError::BuildKeySecureError(
-                    "unable to encrypt pem".to_string(),
-                ))
-            }
-        };
+        let ciphertext_pem = AEAD::encrypt(&aead_key, &pem.as_bytes().to_vec()).map_err(|_| {
+            KeySecureError::BuildKeySecureError("unable to encrypt pem".to_string())
+        })?;
 
-        let try_salt_value = Salt::from_vec(passphrase_salt.clone());
-        let passphrase_salt_value = match try_salt_value {
-            Ok(value) => value,
-            Err(err) => return Err(KeySecureError::BuildKeySecureError(err.to_string())),
-        };
+        let passphrase_salt_value = Salt::from_vec(passphrase_salt.clone())
+            .map_err(|err| KeySecureError::BuildKeySecureError(err.to_string()))?;
 
         let keysecure_kdf_params =
             KeySecureKdfParams::new(passphrase_kdf_params.clone(), passphrase_salt_value);
@@ -220,11 +171,9 @@ impl KeyPair {
     }
 
     pub fn from_pem(pem: String) -> Result<Self, EddsaError> {
-        let signkey = SigningKey::from_pkcs8_pem(pem.as_str());
-        match signkey {
-            Ok(value) => Ok(Self { keypair: value }),
-            Err(err) => Err(EddsaError::DecodePemError(err.to_string())),
-        }
+        SigningKey::from_pkcs8_pem(pem.as_str())
+            .map(|val| Self { keypair: val })
+            .map_err(|err| EddsaError::DecodePemError(err.to_string()))
     }
 
     pub fn signature(&self, message: &[u8]) -> Signature {
