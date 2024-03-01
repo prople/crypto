@@ -19,6 +19,9 @@ pub type EdDSASignatureBytes = [u8; SIGNATURE_LENGTH];
 
 use crate::errors::{CommonError, EddsaError, KeySecureError};
 
+/// `PubKey` is an object that will serialize and encode the [`VerifyingKey`]
+///
+/// This key should be able used to validate the signature that made by it's private key
 #[derive(Debug)]
 pub struct PubKey {
     key: VerifyingKey,
@@ -68,6 +71,11 @@ impl PubKey {
     }
 }
 
+/// `PrivKey` is a private key generated from [`SigningKey`]
+///
+/// This object also able to serialize and encode the private key into `PEM` format
+/// Once this object encoded into `PEM`, we also able to encrypt the data and generate [`KeySecure`]
+/// object from it through trait [`ToKeySecure`].
 #[derive(Debug, Clone)]
 pub struct PrivKey {
     key: SigningKey,
@@ -130,6 +138,9 @@ impl ToKeySecure for PrivKey {
     }
 }
 
+/// `Signature` is an object that consists of a raw message (in bytes) and also it's [`SigningKey`]
+///
+/// This object will be able to sign and encode the signature into `HEX` format
 pub struct Signature {
     message: Vec<u8>,
     key: SigningKey,
@@ -149,6 +160,11 @@ impl Signature {
     }
 }
 
+/// `KeyPair` actually is main entrypoint used to generate the [`SigningKey`]
+///
+/// From this signing key we will also able to generate [`PubKey`] and also [`Signature`] objects.
+/// Besides to generate all necessary objects, this object also able to import given `PEM` data format
+/// into its self
 #[derive(Clone)]
 pub struct KeyPair {
     keypair: SigningKey,

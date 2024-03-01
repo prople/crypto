@@ -1,5 +1,6 @@
 use rst_common::with_errors::thiserror::{self, Error};
 
+/// `CommonError` this kind of error types used for all common errors
 #[derive(Debug, Error, PartialEq)]
 pub enum CommonError {
     #[error("hex: unable to parse given hex: `{0}`")]
@@ -12,6 +13,8 @@ pub enum CommonError {
     UnknownError,
 }
 
+/// `KeySecureError` used specifically for for the `KeySecure` management. This 
+/// error type also extends from [`CommonError`] 
 #[derive(Debug, Error, PartialEq)]
 pub enum KeySecureError {
     #[error("keysecure: unable to build key secure: `{0}`")]
@@ -21,6 +24,7 @@ pub enum KeySecureError {
     Common(#[from] CommonError),
 }
 
+/// `PassphraseError` used specifically when manage password based encryption
 #[derive(Debug, Error, PartialEq)]
 pub enum PassphraseError {
     #[error("passphrase: unable to build params: `{0}`")]
@@ -33,6 +37,8 @@ pub enum PassphraseError {
     ParseSaltError(String),
 }
 
+/// `EddsaError` used specifically when manage public and private keys through
+/// `Eddsa` algorithm
 #[derive(Debug, Error, PartialEq)]
 pub enum EddsaError {
     #[error("eddsa: unable to parse signature: `{0}`")]
@@ -60,6 +66,8 @@ pub enum EddsaError {
     Passphrase(#[from] PassphraseError),
 }
 
+/// `EcdhError` used specifically when manage public and private keys used
+/// through `ECDH` algorithm
 #[derive(Debug, Error, PartialEq)]
 pub enum EcdhError {
     #[error("ecdh: unable to parse public key: `{0}`")]
@@ -78,6 +86,8 @@ pub enum EcdhError {
     KeySecure(#[from] KeySecureError),
 }
 
+/// `AeadError` used specifically when manage cipher management
+/// specifically `AEAD`
 #[derive(Debug, Error)]
 pub enum AeadError {
     #[error("aead: unable to parse bytes: `{0}`")]

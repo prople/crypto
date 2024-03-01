@@ -9,6 +9,13 @@ pub type KeyBytesRange = [u8; 32];
 
 use crate::errors::PassphraseError;
 
+/// `KdfParams` used to store [`Argon2`] main parameters
+///
+/// Parameters to store
+///
+/// - `m_cost`
+/// - `t_cost`
+/// - `p_cost`
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(crate = "self::serde")]
 pub struct KdfParams {
@@ -35,6 +42,10 @@ impl KdfParams {
     }
 }
 
+/// `Salt` used to generate chiper salt management
+///
+/// The *salt* generated through [`ChaCha20Core`], and also
+/// used built-in [`SaltString`]
 pub struct Salt;
 
 impl Salt {
@@ -50,6 +61,8 @@ impl Salt {
     }
 }
 
+/// `Passphrase` used to hash given input password used to
+/// encrypt the private keys and depends to [`KdfParams`]
 pub struct Passphrase {
     params: KdfParams,
 }
@@ -59,6 +72,7 @@ impl Passphrase {
         Self { params }
     }
 
+    // `hash` will hash given password using `Argon2` based on generated salt too
     pub fn hash(&self, password: String, salt: Vec<u8>) -> Result<KeyBytesRange, PassphraseError> {
         let argon_params = Params::new(
             self.params.m_cost,

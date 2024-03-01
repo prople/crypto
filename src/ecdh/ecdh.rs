@@ -18,6 +18,10 @@ pub type ECDHPrivateKeyBytes = [u8; 32];
 
 use crate::errors::{CommonError, EcdhError, KeySecureError};
 
+/// `PublicKey` used to store the [`ECDHPublicKey`] object or a wrapper of it
+///
+/// This object give a helper methods to convert, encode and decode the data, which is
+/// a public key
 #[derive(Debug, PartialEq)]
 pub struct PublicKey {
     key: ECDHPublicKey,
@@ -55,6 +59,9 @@ impl PublicKey {
     }
 }
 
+/// `Secret` used to generate shared secret
+///
+/// The generated shared secret will be able to hash the secret through `BLAKE3`
 pub struct Secret {
     peer: String,
     secret: StaticSecret,
@@ -90,6 +97,8 @@ impl Secret {
         Ok(hex::encode(result.to_bytes()))
     }
 
+    // `shared` used to generate the `ECDH` shared secret from given peer public key using `DiffieHelman`
+    // algorithm
     pub fn shared(self) -> Result<SharedSecret, EcdhError> {
         let peer_pub = PublicKey::from_hex(&self.peer)
             .map_err(|err| EcdhError::ParsePublicKeyError(err.to_string()))?;
@@ -100,6 +109,10 @@ impl Secret {
     }
 }
 
+/// `KeyPair` used to store [`StaticSecret`] and implement [`fmt::Debug`] and [`std::clone::Clone`]
+///
+/// This object provides methods to generate [`PublicKey`], [`Secret`], and [`ECDHPrivateKeyBytes`].
+/// Besides of it, this object also implement [`ToKeySecure`]
 pub struct KeyPair {
     secret: StaticSecret,
 }

@@ -11,12 +11,22 @@ pub const CRYPTO_CIPHER_ALGO: &str = "xchacha20poly1305";
 
 use crate::errors::CommonError;
 
+/// `KeySecureCryptoParams` store a single field for the `nonce`
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(crate = "self::serde")]
 pub struct KeySecureCryptoParams {
     pub nonce: String,
 }
 
+/// `KeySecureCrypto` will be used to store the encrypted data including for 
+/// it's supported components 
+///
+/// This data will consists of:
+/// - cipher
+/// - cipher_text
+/// - cipher_params
+/// - kdf
+/// - kdf_params
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(crate = "self::serde")]
 pub struct KeySecureCrypto {
@@ -47,6 +57,7 @@ impl KeySecureCrypto {
     }
 }
 
+/// `KdfParams` used to store passphrase kdf params and it's salt
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(crate = "self::serde")]
 pub struct KdfParams {
@@ -60,6 +71,8 @@ impl KdfParams {
     }
 }
 
+/// `KeySecure` is a main entrypoint to generate the data, it will depends to
+/// [`KeySecureCrypto`]
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(crate = "self::serde")]
 pub struct KeySecure {

@@ -8,9 +8,10 @@ use rst_common::with_cryptography::rand_chacha::{rand_core::OsRng as RandCoreOsR
 
 use crate::errors::AeadError;
 
+/// `Key` used to store `key` and `nonce`
 pub struct Key {
-    pub key: [u8; 32],
-    pub nonce: [u8; 24],
+    key: [u8; 32],
+    nonce: [u8; 24],
 }
 
 impl Key {
@@ -19,6 +20,8 @@ impl Key {
     }
 }
 
+/// `AEAD` is a main entrypoint to encrypt and decrypt the given data (in bytes), and also
+/// generate nonce (in bytes)
 pub struct AEAD;
 
 impl AEAD {
