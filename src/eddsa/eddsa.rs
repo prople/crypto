@@ -165,7 +165,7 @@ impl Signature {
 /// From this signing key we will also able to generate [`PubKey`] and also [`Signature`] objects.
 /// Besides to generate all necessary objects, this object also able to import given `PEM` data format
 /// into its self
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct KeyPair {
     keypair: SigningKey,
 }
