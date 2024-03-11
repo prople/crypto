@@ -1,16 +1,21 @@
 [package]
 name = "prople-crypto"
-version = "1.0.0"
+version = "0.1.0"
 edition = "2021"
+documentation = "https://docs.rs/prople-crypto"
 authors = ["rstlix0x0 <rstlix.dev@gmail.com>"]
 repository = "https://github.com/prople/crypto"
 rust-version = "1.74"
-description = "A set of libraries and function helpers to maintain cryptography data"
+description = "A set of libraries and function helpers to maintain cryptography data based on Prople system requirements"
 license = "GPL-3.0-only"
 keywords = ["prople", "cryptography"]
 categories = ["cryptography"]
+readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 rst-common = {version = "1.1.0", features = ["standard", "with-errors", "with-cryptography"]}
+
+[lib]
+doctest = false

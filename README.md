@@ -10,10 +10,12 @@ This library provides multiple core algorithms :
 - `Blake3` used as main hash function when hashing generated shared secret key from `ECDH` 
 - `Chacha RNG` used as main random generator
 
-For the `ECDH`, the generated key secret, will using bytes and converted to hex.
-For the `EdDSA`, the generated private key, will using bytes and converted to standard `PEM` format.
+Notes:
 
-> **iNFO**
+- The `ECDH`, the generated key secret, will using bytes and converted to hex.  
+- The `EdDSA`, the generated private key, will using bytes and converted to standard `PEM` format.
+
+> **INFO**
 >
 > All of these cryptographic algorithms used to fulfill `Prople` project's needs
 > It's still possible to use all of these algorithms, as long as your project has a similarity with `Prople`
@@ -42,4 +44,11 @@ All of these generated keys will be put and encrypted into `KeySecure` format fo
     }
   }
 }
+```
+
+## Installation
+
+```toml
+[dependencies]
+rstdev-config = {version = "0.1.3"}
 ```
