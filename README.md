@@ -50,5 +50,5 @@ All of these generated keys will be put and encrypted into `KeySecure` format fo
 
 ```toml
 [dependencies]
-rstdev-config = {version = "0.1.3"}
+prople-crypto = {version = "0.1.0"}
 ```
