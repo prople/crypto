@@ -1,113 +1,21 @@
+//! `keypair` module used to generate primary [`KeyPair`] data format
 use core::fmt;
 
+use rst_common::with_cryptography::hex;
 use rst_common::with_cryptography::rand::{rngs::adapter::ReseedingRng, SeedableRng};
 use rst_common::with_cryptography::rand_chacha::{rand_core::OsRng, ChaCha20Core};
-use rst_common::with_cryptography::x25519_dalek::{
-    PublicKey as ECDHPublicKey, SharedSecret, StaticSecret,
-};
-use rst_common::with_cryptography::{blake3, hex};
+use rst_common::with_cryptography::x25519_dalek::{PublicKey as ECDHPublicKey, StaticSecret};
 
-use crate::base::ToKeySecure;
-use crate::KeySecure::CONTEXT_X25519;
-use crate::KeySecure::{KdfParams as KeySecureKdfParams, KeySecure, KeySecureCrypto};
-use crate::Passphrase::{KdfParams, Passphrase, Salt};
-use crate::AEAD::{Key, AEAD};
+use crate::keysecure::types::constants::CONTEXT_X25519;
+use crate::keysecure::types::errors::KeySecureError;
+use crate::keysecure::types::ToKeySecure;
+use crate::keysecure::builder::Builder;
+use crate::keysecure::KeySecure;
 
-pub type ECDHPublicKeyBytes = [u8; 32];
-pub type ECDHPrivateKeyBytes = [u8; 32];
-
-use crate::errors::{CommonError, EcdhError, KeySecureError};
-
-/// `PublicKey` used to store the [`ECDHPublicKey`] object or a wrapper of it
-///
-/// This object give a helper methods to convert, encode and decode the data, which is
-/// a public key
-#[derive(Debug, PartialEq)]
-pub struct PublicKey {
-    key: ECDHPublicKey,
-}
-
-impl PublicKey {
-    pub fn new(key: ECDHPublicKey) -> Self {
-        Self { key }
-    }
-
-    pub fn to_bytes(&self) -> ECDHPublicKeyBytes {
-        self.key.to_bytes()
-    }
-
-    pub fn to_hex(&self) -> String {
-        hex::encode(self.key.to_bytes())
-    }
-
-    pub fn from_hex(key: &String) -> Result<Self, EcdhError> {
-        let result = hex::decode(key)
-            .map_err(|err| EcdhError::Common(CommonError::ParseHexError(err.to_string())))?;
-
-        let peer_pub_bytes: [u8; 32] = match result.try_into() {
-            Ok(value) => value,
-            Err(_) => {
-                return Err(EcdhError::ParsePublicKeyError(
-                    "unable to parse given public key".to_string(),
-                ))
-            }
-        };
-
-        Ok(Self {
-            key: ECDHPublicKey::from(peer_pub_bytes),
-        })
-    }
-}
-
-/// `Secret` used to generate shared secret
-///
-/// The generated shared secret will be able to hash the secret through `BLAKE3`
-pub struct Secret {
-    peer: String,
-    secret: StaticSecret,
-}
-
-impl Secret {
-    pub fn new(secret: StaticSecret, peer: String) -> Self {
-        Self { peer, secret }
-    }
-
-    pub fn to_blake3(self) -> Result<String, EcdhError> {
-        let hexed = self.to_hex().map_err(|_| {
-            EcdhError::Common(CommonError::ParseHexError(
-                "unable to parse hex".to_string(),
-            ))
-        })?;
-
-        let result = hex::decode(hexed).map_err(|_| {
-            EcdhError::Common(CommonError::ParseHexError(
-                "unable to decode given hex".to_string(),
-            ))
-        })?;
-
-        let hashed = blake3::hash(result.as_slice());
-        Ok(hex::encode(hashed.as_bytes()))
-    }
-
-    pub fn to_hex(self) -> Result<String, EcdhError> {
-        let result = self.shared().map_err(|_| {
-            EcdhError::ParseSharedError("unable to parse shared secret".to_string())
-        })?;
-
-        Ok(hex::encode(result.to_bytes()))
-    }
-
-    // `shared` used to generate the `ECDH` shared secret from given peer public key using `DiffieHelman`
-    // algorithm
-    pub fn shared(self) -> Result<SharedSecret, EcdhError> {
-        let peer_pub = PublicKey::from_hex(&self.peer)
-            .map_err(|err| EcdhError::ParsePublicKeyError(err.to_string()))?;
-
-        let peer_pub_key = ECDHPublicKey::from(peer_pub.to_bytes());
-        let shared_secret = self.secret.diffie_hellman(&peer_pub_key);
-        Ok(shared_secret)
-    }
-}
+use crate::ecdh::pubkey::PublicKey;
+use crate::ecdh::secret::Secret;
+use crate::ecdh::types::errors::*;
+use crate::ecdh::types::ECDHPrivateKeyBytes;
 
 /// `KeyPair` used to store [`StaticSecret`] and implement [`fmt::Debug`] and [`std::clone::Clone`]
 ///
@@ -180,38 +88,13 @@ impl ToKeySecure for KeyPair {
     fn to_keysecure(&self, password: String) -> Result<KeySecure, KeySecureError> {
         let priv_key_hex = self.to_hex();
 
-        let passphrase_salt = Salt::generate();
-        let passphrase_kdf_params = KdfParams::default();
-        let passphrase = Passphrase::new(passphrase_kdf_params.clone());
-
-        let password_hashed = passphrase
-            .hash(password, passphrase_salt.clone())
-            .map_err(|err| KeySecureError::BuildKeySecureError(err.to_string()))?;
-
-        let aead_nonce = AEAD::nonce();
-        let try_aead_nonce: Result<[u8; 24], _> = aead_nonce.try_into();
-        let aead_nonce_value = try_aead_nonce.map_err(|_| {
-            KeySecureError::BuildKeySecureError("unable to generate error".to_string())
-        })?;
-
-        let aead_key = Key::generate(password_hashed, aead_nonce_value);
-        let ciphertext = AEAD::encrypt(&aead_key, &priv_key_hex.as_bytes().to_vec())
-            .map_err(|err| KeySecureError::BuildKeySecureError(err.to_string()))?;
-
-        let passphrase_salt_value = Salt::from_vec(passphrase_salt.clone())
-            .map_err(|err| KeySecureError::BuildKeySecureError(err.to_string()))?;
-
-        let keysecure_kdf_params =
-            KeySecureKdfParams::new(passphrase_kdf_params.clone(), passphrase_salt_value);
-        let keysecure_ciphertext = hex::encode(ciphertext);
-        let keysecure_nonce = hex::encode(aead_nonce_value);
-        let keysecure_crypto =
-            KeySecureCrypto::new(keysecure_nonce, keysecure_ciphertext, keysecure_kdf_params);
-        let keysecure = KeySecure::new(CONTEXT_X25519.to_string(), keysecure_crypto);
+        let keysecure_builder = Builder::new(CONTEXT_X25519.to_string(), password);
+        let keysecure = keysecure_builder.secure(priv_key_hex)?;
 
         Ok(keysecure)
     }
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -1,5 +1,9 @@
 # prople/crypto
 
+> **INFO**
+>
+> We have a significant changes since version `0.2.0`, please use at least this version for a better API library structure
+
 This library provides multiple core algorithms :
 
 - `ECDH / X25519` used for digital signature and key agreement
@@ -50,5 +54,98 @@ All of these generated keys will be put and encrypted into `KeySecure` format fo
 
 ```toml
 [dependencies]
-prople-crypto = {version = "0.1.1"}
+prople-crypto = {version = "0.2.0"}
 ```
+
+## Usages
+
+### ECDH 
+
+Generate `KeyPair` :
+
+```no_run
+use prople_crypto::ecdh::keypair::KeyPair;
+
+let keypair = KeyPair::generate();
+
+// get public key
+let pubkey = keypair.pub_key();
+```
+
+Generate shared secret :
+
+> **INFO**
+>
+> To generate shared secret, both parties must exchange their public keys
+
+```no_run
+use prople_crypto::ecdh::keypair::KeyPair;
+
+// assumed alice and bob as parties
+let keypair_alice = KeyPair::generate();
+let keypair_bob = KeyPair::generate();
+
+let pubkey_alice = keypair_alice.pub_key();
+let pubkey_bob = keypair_bob.pub_key();
+        
+let public_alice_hex = pubkey_alice.to_hex();
+let public_bob_hex = pubkey_bob.to_hex();
+
+// alice need bob's public key
+let secret_alice = keypair_alice.secret(&public_bob_hex);
+
+// bob need alice's public key
+let secret_bob = keypair_bob.secret(&public_alice_hex);
+
+// hash the generated secret using `BLAKE3`        
+let shared_secret_alice_blake3 = secret_alice.to_blake3();
+let shared_secret_bob_blake3 = secret_bob.to_blake3();
+```
+
+Please explore our API library documentation for the [`ecdh`] module for more detail explanation and available public methods
+
+### EDDSA
+
+Generate `KeyPair`
+
+```no_run
+use prople_crypto::eddsa::keypair::KeyPair;
+
+let keypair1 = KeyPair::generate();
+
+// generate PEM value
+let private_key_pem: Result<String, EddsaError> = keypair.priv_key().to_pem();
+
+// generate from PEM
+ley keypair2 = KeyPair::from_pem(private_key_pem.unwrap());
+```
+
+Generate digital signature
+
+```no_run
+use prople_crypto::eddsa::keypair::KeyPair;
+
+let keypair = KeyPair::generate();
+let signature = keypair.signature("my message".as_bytes());
+let digital_signature = signature.to_hex();
+```
+
+Please explore our API library documentation for the [`eddsa`] module for more detail explanation and available public methods
+
+### KeySecure
+
+Our [`keysecure::KeySecure`] format actually try to following strategy and pattern from `Ethereum KeyStore`.
+
+Example generate `KeySecure` from `ECDH` keypair
+
+```no_run
+use prople_crypto::ecdh::keypair::KeyPair;
+
+let keypair = KeyPair::generate();
+let keysecure: Result<KeySecure, KeySecureError> = keypair.to_keysecure("password".to_string);
+```
+
+> **INFO**
+>
+> Both `ECDH` and `EDDSA` generated keypairs already implement `ToKeySecure` trait behavior, so both of this
+> generated data will use same method to generate it's `KeySecure` format

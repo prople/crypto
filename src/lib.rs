@@ -1,25 +1,13 @@
-#![doc = include_str!("../README.md")]
+#![doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/README.md"))]
 
-mod aead;
-mod ecdh;
-mod eddsa;
-mod keysecure;
-mod passphrase;
-
+pub mod aead;
+pub mod ecdh;
+pub mod eddsa;
 pub mod errors;
+pub mod keysecure;
+pub mod passphrase;
 
-pub use aead::aead as AEAD;
-pub use ecdh::ecdh as ECDH;
-pub use eddsa::eddsa as EDDSA;
-pub use keysecure::keysecure as KeySecure;
-pub use passphrase::passphrase as Passphrase;
-
-pub mod base {
-    use super::*;
-
-    pub use keysecure::base::ToKeySecure;
-}
-
+/// `external` used to re-export all cryptography libraries from `rst_common` 
 pub mod external {
     pub use rst_common::with_cryptography as crypto;
 }
