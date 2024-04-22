@@ -4,6 +4,7 @@ use rst_common::with_cryptography::hex;
 
 use crate::keysecure::objects::{KdfParams as KeySecureKdfParams, KeySecureCrypto};
 use crate::keysecure::types::errors::KeySecureError;
+use crate::keysecure::types::ToKeySecure;
 use crate::keysecure::KeySecure;
 
 use crate::aead::{Key, AEAD};
@@ -29,6 +30,10 @@ pub struct Builder {
 impl Builder {
     pub fn new(context: String, password: String) -> Self {
         Self { password, context }
+    }
+
+    pub fn build(password: String, entity: impl ToKeySecure) -> Result<KeySecure, KeySecureError> {
+        entity.to_keysecure(password)
     }
 
     pub fn secure(&self, message: String) -> Result<KeySecure, KeySecureError> {
