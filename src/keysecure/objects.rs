@@ -5,7 +5,7 @@ use crate::keysecure::types::constants::*;
 use crate::passphrase::kdf_params::KdfParams as PassphraseKDFParams;
 
 /// `KeySecureCryptoParams` store a single field for the `nonce`
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(crate = "self::serde")]
 pub struct KeySecureCryptoParams {
     pub nonce: String,
@@ -20,7 +20,7 @@ pub struct KeySecureCryptoParams {
 /// - cipher_params
 /// - kdf
 /// - kdf_params
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(crate = "self::serde")]
 pub struct KeySecureCrypto {
     pub cipher: String,
@@ -51,7 +51,7 @@ impl KeySecureCrypto {
 }
 
 /// `KdfParams` used to store passphrase kdf params and it's salt
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(crate = "self::serde")]
 pub struct KdfParams {
     pub params: PassphraseKDFParams,

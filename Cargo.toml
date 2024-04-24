@@ -1,6 +1,6 @@
 [package]
 name = "prople-crypto"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2021"
 documentation = "https://docs.rs/prople-crypto"
 authors = ["rstlix0x0 <rstlix.dev@gmail.com>"]

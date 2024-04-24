@@ -15,7 +15,7 @@ use types::errors::*;
 
 /// `KeySecure` is a main entrypoint to generate the data, it will depends to
 /// [`KeySecureCrypto`]
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(crate = "self::serde")]
 pub struct KeySecure {
     pub id: Uuid,
