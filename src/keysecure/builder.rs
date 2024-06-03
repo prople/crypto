@@ -11,17 +11,17 @@ use crate::aead::{Key, AEAD};
 use crate::passphrase::prelude::*;
 
 /// `Builder` used to generate a [`KeySecure`] data structure based on some context
-/// 
+///
 /// This object will depends on three important parameters:
 /// - password
 /// - context
 /// - message
-/// 
+///
 /// The `message` property will depends on it's context. If the context is `ED25519`
 /// the given message will be generated `PEM` format from it's private key
-/// 
+///
 /// If the context is `ECDH` or `X25519`, the given message will be hex-ed string value of
-/// it's private key in bytes 
+/// it's private key in bytes
 pub struct Builder {
     password: String,
     context: String,

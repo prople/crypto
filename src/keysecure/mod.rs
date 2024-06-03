@@ -5,10 +5,15 @@
 use rst_common::standard::serde::{self, Deserialize, Serialize};
 use rst_common::standard::serde_json;
 use rst_common::standard::uuid::Uuid;
+use rst_common::with_cryptography::hex;
 
 pub mod builder;
 pub mod objects;
 pub mod types;
+
+use crate::aead::{Key, AEAD};
+use crate::passphrase::kdf_params::KdfParams as PassphraseKDFParams;
+use crate::passphrase::Passphrase;
 
 use objects::*;
 use types::errors::*;
@@ -35,6 +40,41 @@ impl KeySecure {
 
     pub fn to_json(&self) -> Result<String, CommonError> {
         serde_json::to_string(self).map_err(|err| CommonError::BuildJSONError(err.to_string()))
+    }
+
+    pub fn decrypt(&self, password: String) -> Result<Vec<u8>, KeySecureError> {
+        let encrypted_data = self.crypto.cipher_text.to_owned();
+        let encrypted_data_decoded = hex::decode(encrypted_data)
+            .map_err(|err| KeySecureError::DecryptError(err.to_string()))?;
+
+        let kdf_params = self.crypto.kdf_params.to_owned();
+        let passphrase_kdf_params = PassphraseKDFParams {
+            m_cost: kdf_params.params.m_cost,
+            p_cost: kdf_params.params.p_cost,
+            t_cost: kdf_params.params.t_cost,
+            output_len: kdf_params.params.output_len,
+        };
+
+        let kdf = Passphrase::new(passphrase_kdf_params);
+        let salt_vec = kdf_params.salt.as_bytes().to_vec();
+        let password_hash = kdf
+            .hash(password, salt_vec.clone())
+            .map_err(|err| KeySecureError::DecryptError(err.to_string()))?;
+
+        let nonce_str = self.crypto.cipher_params.nonce.to_owned();
+        let nonce_str_decoded =
+            hex::decode(nonce_str).map_err(|err| KeySecureError::DecryptError(err.to_string()))?;
+
+        let nonce_value: [u8; 24] = nonce_str_decoded
+            .clone()
+            .try_into()
+            .map_err(|_| KeySecureError::DecryptError("unable to decode nonce".to_string()))?;
+
+        let key = Key::generate(password_hash, nonce_value);
+        let decrypted = AEAD::decrypt(&key, &encrypted_data_decoded)
+            .map_err(|err| KeySecureError::DecryptError(err.to_string()))?;
+
+        Ok(decrypted)
     }
 }
 
@@ -103,35 +143,40 @@ mod tests {
     #[test]
     fn test_decrypt_keysecure() {
         let keysecure = generate_ecdh_keysecure();
-        let encrypted_hex = keysecure.0.crypto.cipher_text;
-        let try_encrypted_original = hex::decode(encrypted_hex);
-        assert!(!try_encrypted_original.is_err());
-
-        let encrypted = try_encrypted_original.unwrap();
-        let kdf_params = keysecure.0.crypto.kdf_params;
-
-        let passphrase_kdf_params = PassphraseKDFParams {
-            m_cost: kdf_params.params.m_cost,
-            p_cost: kdf_params.params.p_cost,
-            t_cost: kdf_params.params.t_cost,
-            output_len: kdf_params.params.output_len,
-        };
-
-        let kdf = Passphrase::new(passphrase_kdf_params);
-        let salt_vec = kdf_params.salt.as_bytes().to_vec();
-        let try_hash = kdf.hash(String::from("password"), salt_vec.clone());
-        assert!(!try_hash.is_err());
-
-        let nonce_str = keysecure.0.crypto.cipher_params.nonce;
-        let try_nonce = hex::decode(nonce_str);
-        assert!(!try_nonce.is_err());
-
-        let nonce_value: Result<[u8; 24], _> = try_nonce.unwrap().clone().try_into();
-        let key = Key::generate(try_hash.unwrap(), nonce_value.unwrap());
-        let decrypted = AEAD::decrypt(&key, &encrypted);
-        assert!(!decrypted.is_err());
-
         let alice_key = keysecure.1;
+        let decrypted = keysecure.0.decrypt(String::from("password"));
+        assert!(!decrypted.is_err());
         assert_eq!(alice_key.to_vec(), decrypted.unwrap())
+    }
+
+    #[test] 
+    fn test_decrypt_keysecure_check_bytes() {
+        let keysecure1 = generate_ecdh_keysecure();
+        let keysecure2 = generate_ecdh_keysecure();
+
+        let alice_key1 = keysecure1.1;
+        let alice_key2 = keysecure2.1;
+        assert_ne!(alice_key1.to_vec(), alice_key2.to_vec());
+
+        let decrypted1 = keysecure1.0.decrypt(String::from("password"));
+        assert!(!decrypted1.is_err());
+
+        let decrypted_value1 = decrypted1.unwrap();
+        assert_eq!(alice_key1.to_vec(), decrypted_value1.clone());
+        assert_ne!(alice_key2.to_vec(), decrypted_value1.clone());
+        
+        let decrypted2 = keysecure2.0.decrypt(String::from("password"));
+        assert!(!decrypted2.is_err());
+        
+        let decrypted_value2 = decrypted2.unwrap();
+        assert_eq!(alice_key2.to_vec(), decrypted_value2.clone());
+        assert_ne!(alice_key1.to_vec(), decrypted_value2.clone());
+    }
+
+    #[test] 
+    fn test_decrypt_keysecure_invalid_password() {
+        let keysecure = generate_ecdh_keysecure();
+        let decrypted = keysecure.0.decrypt(String::from("invalid"));
+        assert!(decrypted.is_err());
     }
 }

@@ -20,6 +20,9 @@ pub mod errors {
         #[error("keysecure: unable to build key secure: `{0}`")]
         BuildKeySecureError(String),
 
+        #[error("keysecure: unable to decrypt: `{0}`")]
+        DecryptError(String),
+
         #[error("eddsa: common error")]
         Common(#[from] CommonError),
     }
