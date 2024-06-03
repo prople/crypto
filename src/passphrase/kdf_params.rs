@@ -1,5 +1,5 @@
 //! `kdf_params` module provides an object of [`KdfParams`] which hold important
-//! parameters shadowing the `Argon2 Params` 
+//! parameters shadowing the `Argon2 Params`
 use rst_common::standard::serde::{self, Deserialize, Serialize};
 use rst_common::with_cryptography::argon2::Params;
 

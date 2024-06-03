@@ -6,10 +6,10 @@ use rst_common::with_cryptography::rand::{rngs::adapter::ReseedingRng, SeedableR
 use rst_common::with_cryptography::rand_chacha::{rand_core::OsRng, ChaCha20Core};
 use rst_common::with_cryptography::x25519_dalek::{PublicKey as ECDHPublicKey, StaticSecret};
 
+use crate::keysecure::builder::Builder;
 use crate::keysecure::types::constants::CONTEXT_X25519;
 use crate::keysecure::types::errors::KeySecureError;
 use crate::keysecure::types::ToKeySecure;
-use crate::keysecure::builder::Builder;
 use crate::keysecure::KeySecure;
 
 use crate::ecdh::pubkey::PublicKey;

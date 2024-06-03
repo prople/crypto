@@ -2,10 +2,10 @@
 use rst_common::with_cryptography::ed25519_dalek::pkcs8::EncodePrivateKey;
 use rst_common::with_cryptography::ed25519_dalek::{self, SigningKey};
 
+use crate::keysecure::builder::Builder;
 use crate::keysecure::types::constants::CONTEXT_ED25519;
 use crate::keysecure::types::errors::KeySecureError;
 use crate::keysecure::types::ToKeySecure;
-use crate::keysecure::builder::Builder;
 use crate::keysecure::KeySecure;
 
 use crate::eddsa::types::errors::EddsaError;

@@ -1,5 +1,5 @@
 //! `key` module provides a simple object struct to maintain
-//! generated key and nonce used to encrypt and decrypt a message 
+//! generated key and nonce used to encrypt and decrypt a message
 
 /// `Key` used to store `key` and `nonce`
 ///
