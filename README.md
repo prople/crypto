@@ -1,8 +1,8 @@
 # prople/crypto
 
-> **INFO**
+> **WARNING**
 >
-> We have a significant changes since version `0.2.0`, please use at least this version for a better API library structure
+> We have a breaking changes start version `0.3.0`, please use at least this version for a better API library structure
 
 This library provides multiple core algorithms :
 
