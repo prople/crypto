@@ -1,6 +1,6 @@
 [package]
 name = "prople-crypto"
-version = "0.2.3"
+version = "0.3.0"
 edition = "2021"
 documentation = "https://docs.rs/prople-crypto"
 authors = ["rstlix0x0 <rstlix.dev@gmail.com>"]
@@ -15,7 +15,7 @@ readme = "README.md"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rst-common = {version = "1.1.0", features = ["standard", "with-errors", "with-cryptography"]}
+rst-common = {version = "~1", features = ["standard", "with-errors", "with-cryptography"]}
 
 [lib]
 doctest = false
