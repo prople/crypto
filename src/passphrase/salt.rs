@@ -4,6 +4,9 @@ use rst_common::with_cryptography::rand::{rngs::adapter::ReseedingRng, SeedableR
 use rst_common::with_cryptography::rand_chacha::{rand_core::OsRng as RandCoreOsRng, ChaCha20Core};
 
 use crate::passphrase::types::errors::PassphraseError;
+use crate::types::Value;
+
+use super::types::SaltBytes;
 
 /// `Salt` used to generate chiper salt management
 ///
@@ -12,14 +15,19 @@ use crate::passphrase::types::errors::PassphraseError;
 pub struct Salt;
 
 impl Salt {
-    pub fn generate() -> Vec<u8> {
+    pub fn generate() -> SaltBytes {
         let prng = ChaCha20Core::from_entropy();
         let reseeding_rng = ReseedingRng::new(prng, 0, RandCoreOsRng);
         let salt = SaltString::generate(reseeding_rng);
-        salt.as_str().as_bytes().to_vec()
+        SaltBytes::from(salt.as_str().as_bytes().to_vec())
     }
 
-    pub fn from_vec(v: Vec<u8>) -> Result<String, PassphraseError> {
-        String::from_utf8(v).map_err(|err| PassphraseError::ParseSaltError(err.to_string()))
+    pub fn from_vec(v: SaltBytes) -> Result<String, PassphraseError> {
+        let salt_bytes_vec = v
+            .get()
+            .map_err(|err| PassphraseError::ParseSaltError(err.to_string()))?;
+
+        String::from_utf8(salt_bytes_vec)
+            .map_err(|err| PassphraseError::ParseSaltError(err.to_string()))
     }
 }

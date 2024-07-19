@@ -7,6 +7,9 @@ pub enum CommonError {
     #[error("hex: unable to parse given hex: `{0}`")]
     ParseHexError(String),
 
+    #[error("unable parse value: `{0}`")]
+    ParseValueError(String),
+
     #[error("json: unable to parse given hex: `{0}`")]
     BuildJSONError(String),
 

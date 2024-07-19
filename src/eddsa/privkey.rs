@@ -3,13 +3,13 @@ use rst_common::with_cryptography::ed25519_dalek::pkcs8::EncodePrivateKey;
 use rst_common::with_cryptography::ed25519_dalek::{self, SigningKey};
 
 use crate::keysecure::builder::Builder;
-use crate::keysecure::types::constants::CONTEXT_ED25519;
+use crate::keysecure::types::ContextOptions;
 use crate::keysecure::types::errors::KeySecureError;
-use crate::keysecure::types::ToKeySecure;
+use crate::keysecure::types::{ToKeySecure, Password};
 use crate::keysecure::KeySecure;
 
 use crate::eddsa::types::errors::EddsaError;
-use crate::eddsa::types::EdDSAPrivKeyBytes;
+use crate::eddsa::types::PrivateKeyBytes;
 
 /// `PrivKey` is a private key generated from [`SigningKey`]
 ///
@@ -26,8 +26,8 @@ impl PrivKey {
         Self { key }
     }
 
-    pub fn serialize(&self) -> EdDSAPrivKeyBytes {
-        self.key.to_bytes()
+    pub fn serialize(&self) -> PrivateKeyBytes {
+        PrivateKeyBytes::from(self.key.to_bytes())
     }
 
     pub fn to_pem(&self) -> Result<String, EddsaError> {
@@ -39,12 +39,12 @@ impl PrivKey {
 }
 
 impl ToKeySecure for PrivKey {
-    fn to_keysecure(&self, password: String) -> Result<KeySecure, KeySecureError> {
+    fn to_keysecure(&self, password: Password) -> Result<KeySecure, KeySecureError> {
         let pem = self
             .to_pem()
             .map_err(|err| KeySecureError::BuildKeySecureError(err.to_string()))?;
 
-        let keysecure_builder = Builder::new(CONTEXT_ED25519.to_string(), password);
+        let keysecure_builder = Builder::new(ContextOptions::ED25519, password);
         let keysecure = keysecure_builder.secure(pem)?;
 
         Ok(keysecure)

@@ -6,6 +6,7 @@ pub mod eddsa;
 pub mod errors;
 pub mod keysecure;
 pub mod passphrase;
+pub mod types;
 
 /// `external` used to re-export all cryptography libraries from `rst_common`
 pub mod external {

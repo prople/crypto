@@ -1,6 +1,4 @@
 //! `types` module provides base types for `passphrase` module
-pub type KeyBytesRange = [u8; 32];
-
 pub mod errors {
     use rst_common::with_errors::thiserror::{self, Error};
 
@@ -17,5 +15,24 @@ pub mod errors {
 
         #[error("passphrase: unable to parse salt: `{0}`")]
         ParseSaltError(String),
+    }
+}
+
+pub type KeyBytesRange = [u8; 32];
+
+use crate::types::Value;
+
+#[derive(Clone, Debug)]
+pub struct SaltBytes(Vec<u8>);
+
+impl Value<Vec<u8>> for SaltBytes {
+    fn get(&self) -> Result<Vec<u8>, errors::CommonError> {
+        Ok(self.0.to_owned())
+    }
+}
+
+impl From<Vec<u8>> for SaltBytes {
+    fn from(value: Vec<u8>) -> Self {
+        SaltBytes(value)
     }
 }

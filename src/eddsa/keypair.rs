@@ -52,7 +52,10 @@ mod tests {
     use super::*;
     use rst_common::with_cryptography::hex;
 
-    use crate::keysecure::types::ToKeySecure;
+    use crate::{
+        keysecure::types::{Password, ToKeySecure},
+        types::{ByteHex, Hexer, Value},
+    };
 
     #[test]
     fn test_gen_pub_key_multiple() {
@@ -79,13 +82,19 @@ mod tests {
         let pubkey = keypair.pub_key();
         let pubkeybytes = pubkey.serialize();
         let pubkeyhex = pubkey.to_hex();
-        let pubkeytoorig = hex::decode(pubkeyhex.clone());
+        let pubkeytoorig = hex::decode(pubkeyhex.clone().hex());
+
+        let pubkeybytes_val = pubkeybytes.get();
+        assert!(!pubkeybytes_val.is_err());
 
         assert!(!pubkeytoorig.is_err());
-        assert_eq!(pubkeybytes, pubkeytoorig.clone().unwrap().as_slice());
         assert_eq!(
-            pubkeyhex,
-            hex::encode(pubkeytoorig.clone().unwrap().as_slice())
+            pubkeybytes_val.unwrap(),
+            pubkeytoorig.clone().unwrap().as_slice()
+        );
+        assert_eq!(
+            pubkeyhex.hex(),
+            hex::encode(pubkeytoorig.unwrap().as_slice())
         )
     }
 
@@ -111,10 +120,10 @@ mod tests {
         let signature = keypair.signature(message);
         let signature_hex = signature.to_hex();
 
-        let verify_hex_valid = pubkey.verify(message, signature_hex.clone());
+        let verify_hex_valid = pubkey.verify(message, ByteHex::from(signature_hex.clone()));
         assert!(!verify_hex_valid.is_err());
 
-        let verify_hex_invalid = pubkey.verify(b"invalid", signature_hex.clone());
+        let verify_hex_invalid = pubkey.verify(b"invalid", ByteHex::from(signature_hex));
         assert!(verify_hex_invalid.is_err());
         assert!(matches!(
             verify_hex_invalid,
@@ -137,7 +146,7 @@ mod tests {
         let priv_key_pem = priv_key.to_pem();
         assert!(!priv_key_pem.is_err());
 
-        let priv_key_secure = priv_key.to_keysecure("test".to_string());
+        let priv_key_secure = priv_key.to_keysecure(Password::from("test".to_string()));
         assert!(!priv_key_secure.is_err());
 
         let keysecure = priv_key_secure.unwrap();

@@ -1,6 +1,10 @@
 //! `key` module provides a simple object struct to maintain
 //! generated key and nonce used to encrypt and decrypt a message
 
+use crate::{errors::CommonError, types::Value};
+
+use super::{KeyEncryption, KeyNonce};
+
 /// `Key` used to store `key` and `nonce`
 ///
 /// The `key` field used to store bytes that defined by
@@ -14,20 +18,20 @@
 /// Both of these properties grouped into this single object to simplify
 /// the API library
 pub struct Key {
-    key: [u8; 32],
-    nonce: [u8; 24],
+    key: KeyEncryption,
+    nonce: KeyNonce,
 }
 
 impl Key {
-    pub fn generate(key: [u8; 32], nonce: [u8; 24]) -> Self {
+    pub fn new(key: KeyEncryption, nonce: KeyNonce) -> Self {
         Self { key, nonce }
     }
 
-    pub fn get_key(&self) -> [u8; 32] {
-        self.key
+    pub fn get_key_bytes(&self) -> Result<[u8; 32], CommonError> {
+        self.key.get()
     }
 
-    pub fn get_nonce(&self) -> [u8; 24] {
-        self.nonce
+    pub fn get_nonce_bytes(&self) -> Result<[u8; 24], CommonError> {
+        self.nonce.get()
     }
 }

@@ -10,7 +10,9 @@ use rst_common::with_cryptography::argon2::{Algorithm, Argon2, Params, Version};
 
 use kdf_params::KdfParams;
 use types::errors::PassphraseError;
-use types::KeyBytesRange;
+use types::{KeyBytesRange, SaltBytes};
+
+use crate::types::Value;
 
 /// `Passphrase` used to hash given input password used to
 /// encrypt the private keys and depends to [`KdfParams`]
@@ -24,7 +26,11 @@ impl Passphrase {
     }
 
     // `hash` will hash given password using `Argon2` based on generated salt too
-    pub fn hash(&self, password: String, salt: Vec<u8>) -> Result<KeyBytesRange, PassphraseError> {
+    pub fn hash(
+        &self,
+        password: String,
+        salt: SaltBytes,
+    ) -> Result<KeyBytesRange, PassphraseError> {
         let argon_params = Params::new(
             self.params.m_cost,
             self.params.t_cost,
@@ -36,10 +42,14 @@ impl Passphrase {
         let mut output_key_material = [0u8; 32];
         let argon = Argon2::new(Algorithm::default(), Version::default(), argon_params);
 
+        let salt_bytes_val = salt
+            .get()
+            .map_err(|err| PassphraseError::ParseSaltError(err.to_string()))?;
+
         argon
             .hash_password_into(
                 password.as_bytes(),
-                salt.as_slice(),
+                &salt_bytes_val.as_slice(),
                 &mut output_key_material,
             )
             .map(|_| output_key_material)
@@ -72,7 +82,8 @@ mod tests {
         let params = KdfParams::default();
 
         let salt = Salt::generate();
-        let salt_to_string = String::from_utf8(salt.clone());
+        let salt_bytes_val = salt.get().unwrap();
+        let salt_to_string = String::from_utf8(salt_bytes_val.clone());
         assert!(!salt_to_string.is_err());
 
         let kdf = Passphrase::new(params.clone());
