@@ -54,7 +54,7 @@ All of these generated keys will be put and encrypted into `KeySecure` format fo
 
 ```toml
 [dependencies]
-prople-crypto = {version = "0.3.0"}
+prople-crypto = {version = "~0.3"}
 ```
 
 ## Usages
