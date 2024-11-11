@@ -19,8 +19,12 @@ impl Signature {
         }
     }
 
-    pub fn to_hex(&self) -> String {
+    pub fn sign(&self) -> [u8; 64] {
         let signature = self.key.sign(self.message.as_slice());
-        hex::encode(signature.to_bytes())
+        signature.to_bytes()
+    }
+
+    pub fn to_hex(&self) -> String {
+        hex::encode(self.sign())
     }
 }
