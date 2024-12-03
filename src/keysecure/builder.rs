@@ -25,6 +25,7 @@ use super::types::{ContextOptions, Password};
 ///
 /// If the context is `ECDH` or `X25519`, the given message will be hex-ed string value of
 /// it's private key in bytes
+#[derive(Clone, Debug)]
 pub struct Builder {
     password: Password,
     context: ContextOptions,

@@ -17,6 +17,7 @@ use super::{KeyEncryption, KeyNonce};
 ///
 /// Both of these properties grouped into this single object to simplify
 /// the API library
+#[derive(Clone, Debug)]
 pub struct Key {
     key: KeyEncryption,
     nonce: KeyNonce,

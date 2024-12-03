@@ -57,7 +57,7 @@ impl VectorValue<u8> for MessageCipher {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct KeyEncryption([u8; 32]);
 
 impl BytesValue for KeyEncryption {
@@ -112,6 +112,7 @@ impl From<[u8; 32]> for KeyEncryption {
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct KeyNonce([u8; 24]);
 
 impl Value<[u8; 24]> for KeyNonce {

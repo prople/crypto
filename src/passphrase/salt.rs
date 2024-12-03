@@ -12,6 +12,7 @@ use super::types::SaltBytes;
 ///
 /// The *salt* generated through [`ChaCha20Core`], and also
 /// used built-in [`SaltString`]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Salt;
 
 impl Salt {

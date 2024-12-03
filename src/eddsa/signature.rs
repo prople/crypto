@@ -6,6 +6,7 @@ use rst_common::with_cryptography::hex;
 /// `Signature` is an object that consists of a raw message (in bytes) and also it's [`SigningKey`]
 ///
 /// This object will be able to sign and encode the signature into `HEX` format
+#[derive(Clone, Debug)]
 pub struct Signature {
     message: Vec<u8>,
     key: SigningKey,

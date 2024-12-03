@@ -13,6 +13,7 @@ use crate::types::{Blake3Hash, ByteHex, Hexer, Value};
 /// `Secret` used to generate shared secret
 ///
 /// The generated shared secret will be able to hash the secret through `BLAKE3`
+#[derive(Clone)]
 pub struct Secret {
     peer: ByteHex,
     secret: StaticSecret,

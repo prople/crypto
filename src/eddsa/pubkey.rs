@@ -11,7 +11,7 @@ use crate::types::{ByteHex, Value};
 /// `PubKey` is an object that will serialize and encode the [`VerifyingKey`]
 ///
 /// This key should be able used to validate the signature that made by it's private key
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct PubKey {
     key: VerifyingKey,
 }

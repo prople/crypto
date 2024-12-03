@@ -10,7 +10,7 @@ use crate::types::{ByteHex, Value};
 ///
 /// This object give a helper methods to convert, encode and decode the data, which is
 /// a public key
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct PublicKey {
     key: ECDHPublicKey,
 }
