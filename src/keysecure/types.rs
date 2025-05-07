@@ -34,14 +34,14 @@ use crate::types::StringValue;
 #[serde(crate = "self::serde")]
 pub enum ContextOptions {
     X25519,
-    ED25519
+    ED25519,
 }
 
 impl ContextOptions {
     pub fn get(&self) -> String {
         match self {
             ContextOptions::X25519 => String::from("X25519"),
-            ContextOptions::ED25519 => String::from("Ed25519") 
+            ContextOptions::ED25519 => String::from("Ed25519"),
         }
     }
 }

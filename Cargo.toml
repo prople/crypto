@@ -15,6 +15,7 @@ readme = "README.md"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+husky-rs = "0.1.3"
 rst-common = {version = "~1", features = ["standard", "with-errors", "with-cryptography"]}
 
 [lib]

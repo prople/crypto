@@ -100,9 +100,7 @@ impl TryFrom<Bytes> for KeyEncryption {
         let bytes_output: Result<&[u8; 32], CommonError> = <&[u8; 32]>::try_from(byte_slice)
             .map_err(|_| CommonError::ParseValueError("unable to parse bytes".to_string()));
 
-        let output = bytes_output.map(|val| KeyEncryption(val.to_owned()));
-
-        output
+        bytes_output.map(|val| KeyEncryption(val.to_owned()))
     }
 }
 
@@ -149,9 +147,7 @@ impl TryFrom<Bytes> for KeyNonce {
         let bytes_output: Result<&[u8; 24], CommonError> = <&[u8; 24]>::try_from(byte_slice)
             .map_err(|_| CommonError::ParseValueError("unable to parse bytes".to_string()));
 
-        let output = bytes_output.map(|val| KeyNonce(val.to_owned()));
-
-        output
+        bytes_output.map(|val| KeyNonce(val.to_owned()))
     }
 }
 

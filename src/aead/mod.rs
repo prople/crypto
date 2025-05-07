@@ -48,7 +48,7 @@ impl AEAD {
         let cipher = XChaCha20Poly1305::new(&key_bytes.into());
         cipher
             .encrypt(&nonce_bytes.into(), message.vec().as_slice())
-            .map(|val| MessageCipher::from(val))
+            .map(MessageCipher::from)
             .map_err(|err| errors::AeadError::CipherGeneratorError(err.to_string()))
     }
 
@@ -62,7 +62,7 @@ impl AEAD {
         let cipher = XChaCha20Poly1305::new(&key_bytes.into());
         cipher
             .decrypt(&nonce_bytes.into(), encrypted.vec().as_ref())
-            .map(|val| MessagePlain::from(val))
+            .map(MessagePlain::from)
             .map_err(|err| errors::AeadError::CipherGeneratorError(err.to_string()))
     }
 

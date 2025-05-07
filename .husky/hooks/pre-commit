@@ -1,0 +1,20 @@
+#!/bin/sh
+
+# Exit on any error
+set -e
+
+echo "Running pre-commit checks..."
+
+# Format code
+echo "Running cargo fmt..."
+cargo fmt --all -- --check
+
+# Run Clippy
+echo "Running cargo clippy..."
+cargo clippy -- -D warnings
+
+# Run tests
+echo "Running cargo test..."
+cargo test
+
+echo "✓ All pre-commit checks passed"

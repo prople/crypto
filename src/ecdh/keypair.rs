@@ -10,9 +10,9 @@ use crate::errors::CommonError;
 use crate::types::{ByteHex, BytesValue, Hexer, Value};
 
 use crate::keysecure::builder::Builder;
-use crate::keysecure::types::{ContextOptions, Password};
 use crate::keysecure::types::errors::KeySecureError;
 use crate::keysecure::types::ToKeySecure;
+use crate::keysecure::types::{ContextOptions, Password};
 use crate::keysecure::KeySecure;
 
 use crate::ecdh::pubkey::PublicKey;

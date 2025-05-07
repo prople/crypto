@@ -49,7 +49,7 @@ impl Passphrase {
         argon
             .hash_password_into(
                 password.as_bytes(),
-                &salt_bytes_val.as_slice(),
+                salt_bytes_val.as_slice(),
                 &mut output_key_material,
             )
             .map(|_| output_key_material)

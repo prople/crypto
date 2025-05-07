@@ -136,10 +136,7 @@ mod tests {
         let keysecure_kdf_params = KdfParams::new(kdf_params, salt_string.unwrap());
         let crypto = KeySecureCrypto::new(crypto_nonce_hex, encrypted_hex, keysecure_kdf_params);
 
-        (
-            KeySecure::new(ContextOptions::X25519, crypto),
-            alice_key,
-        )
+        (KeySecure::new(ContextOptions::X25519, crypto), alice_key)
     }
 
     #[test]

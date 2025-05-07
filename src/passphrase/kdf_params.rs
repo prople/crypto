@@ -21,8 +21,8 @@ pub struct KdfParams {
     pub output_len: usize,
 }
 
-impl KdfParams {
-    pub fn default() -> Self {
+impl Default for KdfParams {
+    fn default() -> Self {
         let argon2_default_params = Params::default();
 
         Self {

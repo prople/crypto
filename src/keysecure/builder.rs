@@ -36,7 +36,10 @@ impl Builder {
         Self { password, context }
     }
 
-    pub fn build(password: Password, entity: impl ToKeySecure) -> Result<KeySecure, KeySecureError> {
+    pub fn build(
+        password: Password,
+        entity: impl ToKeySecure,
+    ) -> Result<KeySecure, KeySecureError> {
         entity.to_keysecure(password)
     }
 
